@@ -1,12 +1,19 @@
 {
   lib,
   stdenv,
+  libcxxStdenv,
+  gtest,
+  rapidcheck,
+  aws-sdk-cpp,
+  aws-crt-cpp,
   runCommand,
   importNpmLock,
   zig,
   bun,
   nodejs,
+  pkg-config,
   wasmtime,
+  nix,
   bundle ? null,
 }:
 stdenv.mkDerivation (finalAttrs: {
@@ -27,6 +34,25 @@ stdenv.mkDerivation (finalAttrs: {
     bun
     nodejs
     importNpmLock.npmConfigHook
+    pkg-config
+  ];
+
+  buildInputs = [
+    (nix.override {
+      stdenv = libcxxStdenv;
+      rapidcheck = rapidcheck.override {
+        stdenv = libcxxStdenv;
+      };
+      gtest = gtest.override {
+        stdenv = libcxxStdenv;
+      };
+      aws-sdk-cpp = aws-sdk-cpp.override {
+        stdenv = libcxxStdenv;
+        aws-crt-cpp = aws-crt-cpp.override {
+          stdenv = libcxxStdenv;
+        };
+      };
+    })
   ];
 
   postUnpack = ''

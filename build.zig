@@ -108,6 +108,26 @@ pub fn build(b: *std.Build) void {
     options_server.addOption([]const u8, "libdir", b.getInstallPath(.lib, "kraken"));
     options_server.addOption(std.SemanticVersion, "version", version);
 
+    const libnix = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("lib/nix.zig"),
+        .link_libc = true,
+        .link_libcpp = true,
+    });
+
+    libnix.linkSystemLibrary("nix-store", .{});
+
+    libnix.addCSourceFiles(.{
+        .root = b.path("lib/nix"),
+        .files = &.{
+            "store/machines.cpp",
+        },
+        .flags = &.{
+            "-std=c++2a",
+        },
+    });
+
     const module_server = b.createModule(.{
         .target = target,
         .root_source_file = b.path("src/main.zig"),
@@ -122,6 +142,10 @@ pub fn build(b: *std.Build) void {
                     .target = target,
                     .optimize = optimize,
                 }).module("xev"),
+            },
+            .{
+                .name = "nix",
+                .module = libnix,
             },
         },
     });
@@ -166,6 +190,16 @@ pub fn build(b: *std.Build) void {
     });
 
     step_test.dependOn(&test_bun.step);
+
+    const test_nix = b.addTest(.{
+        .name = "test-nix",
+        .root_module = libnix,
+    });
+
+    test_nix.linkSystemLibrary("nix-store");
+
+    const test_nix_run = b.addRunArtifact(test_nix);
+    step_test.dependOn(&test_nix_run.step);
 
     const test_server = b.addTest(.{
         .name = "test-server",
