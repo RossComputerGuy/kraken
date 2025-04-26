@@ -19,13 +19,24 @@
       systems = import inputs.systems;
 
       perSystem =
-        { lib, pkgs, ... }:
         {
-          packages.default = (pkgs.callPackage ./default.nix { }).overrideAttrs (
-            f: p: {
-              version = "0.1.0-git+${self.shortRev or "dirty"}";
-            }
-          );
+          self',
+          inputs,
+          lib,
+          pkgs,
+          ...
+        }:
+        {
+          packages = {
+            default = (pkgs.callPackage ./nix/package.nix { }).overrideAttrs (
+              f: p: {
+                version = "0.1.0-git+${self.shortRev or "dirty"}";
+              }
+            );
+            bundled = self'.packages.default.override {
+              bundle = true;
+            };
+          };
         };
     };
 }
