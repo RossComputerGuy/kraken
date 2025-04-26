@@ -16,8 +16,10 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const bundle = b.option(bool, "bundle", "Whether to bundle the frontend into the server") orelse (optimize == .ReleaseFast);
+    const locked_npm_modules = b.option(bool, "locked-npm-modules", "Whether to copy the node_modules directory or npm install") orelse false;
 
     const bun = b.findProgram(&.{"bun"}, &.{}) catch @panic("Cannot find bun");
+    const npm = b.findProgram(&.{"npm"}, &.{}) catch @panic("Cannot find npm");
     const tar = b.findProgram(&.{"tar"}, &.{}) catch @panic("Cannot find tar");
 
     const build_zon = std.zon.parse.fromSlice(struct {
@@ -63,11 +65,8 @@ pub fn build(b: *std.Build) void {
     const frontend_source = b.addWriteFiles();
     _ = frontend_source.addCopyFile(b.path("index.ts"), "index.ts");
     _ = frontend_source.addCopyFile(b.path("package.json"), "package.json");
+    _ = frontend_source.addCopyFile(b.path("package-lock.json"), "package-lock.json");
     _ = frontend_source.addCopyFile(exe_client.getEmittedBin(), "client.wasm");
-
-    frontend_source.step.addWatchInput(b.path("index.ts")) catch @panic("OOM");
-    frontend_source.step.addWatchInput(b.path("index.html")) catch @panic("OOM");
-    frontend_source.step.addWatchInput(b.path("package.json")) catch @panic("OOM");
 
     const frontend_source_index_html = frontend_source.addCopyFile(b.path("index.html"), "index.html");
 
@@ -77,6 +76,19 @@ pub fn build(b: *std.Build) void {
         "--minify",
         "--target=browser",
     });
+
+    if (locked_npm_modules) {
+        _ = frontend_source.addCopyDirectory(b.path("node_modules"), "node_modules", .{});
+    } else {
+        const package_lock = b.addSystemCommand(&.{
+            npm,
+            "install",
+        });
+
+        package_lock.setCwd(frontend_source.getDirectory());
+
+        build_frontend.step.dependOn(&package_lock.step);
+    }
 
     const frontend_build = build_frontend.addPrefixedOutputDirectoryArg("--outdir=", ".");
 

@@ -11,32 +11,49 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
   version = "0.1.0";
 
   src = ./.;
+  zigZon = ./build.zig.zon;
+  packageLockJSON = ./package-lock.json;
+
+  npmDeps = pkgs.importNpmLock {
+    npmRoot = ./.;
+  };
 
   nativeBuildInputs = with pkgs; [
     zig
     zig.hook
     bun
+    nodejs
+    importNpmLock.npmConfigHook
   ];
 
   postUnpack = ''
-    ln -s ${pkgs.runCommand "${finalAttrs.pname}-zig-deps-${finalAttrs.version}" {
-      inherit (finalAttrs) src;
+    ln -s ${
+      let
+        suffix = "-${(pkgs.lib.removeSuffix "-build.zig.zon" (pkgs.lib.removePrefix "${builtins.storeDir}/" finalAttrs.zigZon))}";
+      in
+      pkgs.runCommand "${finalAttrs.pname}-zig-deps-${finalAttrs.version}${suffix}"
+        {
+          inherit (finalAttrs) src;
 
-      nativeBuildInputs = [ pkgs.zig ];
+          nativeBuildInputs = [ pkgs.zig ];
 
-      outputHashAlgo = null;
-      outputHashMode = "recursive";
-      outputHash = "sha256-jdbmy2z12/jFmmOJE8WuBe9ktSEMYXDdxhcvlwUewQA=";
-    } ''
-      export ZIG_GLOBAL_CACHE_DIR=$(mktemp -d)
+          outputHashAlgo = null;
+          outputHashMode = "recursive";
+          outputHash = "sha256-te+VtPT7P0tC75HZjK/RYsM9f2Tx0lWwG4UcPjpAiMQ=";
+        }
+        ''
+          export ZIG_GLOBAL_CACHE_DIR=$(mktemp -d)
 
-      runPhase unpackPhase
+          runPhase unpackPhase
 
-      zig build --fetch
+          zig build --fetch
 
-      mv $ZIG_GLOBAL_CACHE_DIR/p $out
-    ''} $ZIG_GLOBAL_CACHE_DIR/p
+          mv $ZIG_GLOBAL_CACHE_DIR/p $out
+        ''
+    } $ZIG_GLOBAL_CACHE_DIR/p
   '';
+
+  zigBuildFlags = "-Dlocked-npm-modules";
 
   doCheck = true;
   nativeCheckInputs = with pkgs; [

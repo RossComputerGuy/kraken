@@ -40,6 +40,10 @@
             .url = "https://github.com/mitchellh/libxev/archive/94ed6af7b2aaaeab987fbf87fcee410063df715b.tar.gz",
             .hash = "libxev-0.0.0-86vtc-zkEgB7uv1i0Sa6ytJETZQi_lHJrImu9mLb9moi",
         },
+        .@"pg.zig" = .{
+            .url = "https://github.com/karlseguin/pg.zig/archive/901c289368f0eae8e37ca90e3f806be9e3ff86f9.tar.gz",
+            .hash = "pg-0.0.0-Wp_7gRD-BQCbDvJEahLsdoxUdlR7BsmvPnQyYdGyQzEE",
+        },
     },
     .paths = .{
         "LICENSE",
