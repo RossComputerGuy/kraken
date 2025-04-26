@@ -69,6 +69,8 @@ pub fn create(gpa: Allocator, options: Options) !*Server {
         }).func,
     };
     self.loop.add(&self.completion_server_accept);
+
+    std.log.info("Server is up at http://{}", .{addr});
     return self;
 }
 

@@ -1,4 +1,4 @@
-import client from "./client.wasm";
+import client from './client.wasm';
 
 function readIOVec(
   view: DataView,
@@ -26,13 +26,19 @@ const inst = await WebAssembly.instantiateStreaming(fetch(client), {
       const iovs = readIOVec(view, ciovs_ptr, ciovs_len);
       const decoder = new TextDecoder();
 
+      if (fd == 3) document.body.innerHTML = '';
+
       let bytesWritten = 0;
       for (const iov of iovs) {
         if (iov.byteLength === 0) continue;
 
-        if (fd === 1 || fd === 2) {
+        if (fd === 1 || fd === 2 || fd == 3) {
           const output = decoder.decode(iov);
-          console.log(output);
+          if (fd == 3) {
+            document.body.innerHTML += output;
+          } else {
+            console.log(output);
+          }
         } else {
           return 44;
         }
@@ -46,7 +52,5 @@ const inst = await WebAssembly.instantiateStreaming(fetch(client), {
     proc_exit: () => {},
   },
 });
-
-console.log(inst);
 
 inst.instance.exports._start();
