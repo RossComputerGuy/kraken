@@ -39,7 +39,7 @@ pkgs.stdenv.mkDerivation (finalAttrs: {
 
           outputHashAlgo = null;
           outputHashMode = "recursive";
-          outputHash = "sha256-te+VtPT7P0tC75HZjK/RYsM9f2Tx0lWwG4UcPjpAiMQ=";
+          outputHash = "sha256-vqVLKTjjYqaw7Gi3SnbIJ3t4U8TMQ8nTEd/CLRIRhME=";
         }
         ''
           export ZIG_GLOBAL_CACHE_DIR=$(mktemp -d)
